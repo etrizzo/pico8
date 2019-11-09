@@ -1,7 +1,91 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
-hello qtie
+-- Cherrymander
+-- by tinkkles and drell
+
+-- Constants
+ds = 0;
+lastcalled = time();
+
+-- variables that need to be reset pre game instance! 
+function setglobals()
+
+end
+
+--------------------------------------------------------------------------
+-- Init
+--------------------------------------------------------------------------
+function _init()
+    startup()
+end
+
+--------------------------------------------------------------------------
+function startup()
+    setglobals()
+end
+
+
+--------------------------------------------------------------------------
+-- update
+--------------------------------------------------------------------------
+function _update()
+    calculatedeltaseconds();
+end
+
+
+
+--------------------------------------------------------------------------
+-- render
+--------------------------------------------------------------------------
+function _draw()
+    cls()
+end
+
+
+--------------------------------------------------------------------------
+-- utils
+--------------------------------------------------------------------------
+function calculatedeltaseconds()
+    ds = (time() - lastcalled)
+    lastcalled = time()
+
+   -- gametimer -= ds -- being lazy and putting this here
+end
+
+--------------------------------------------------------------------------
+function getcoordsfromindex(index, width)
+    xcoord = flr(index % width);
+    ycoord = flr((index - xcoord) / width);
+    return xcoord,ycoord
+end
+
+--------------------------------------------------------------------------
+function rangemap(invalue, instart, inend, outstart, outend)
+
+    if(instart == inend) return (outstart + outend) * .5;
+
+    -- translate
+    inrange = inend - instart;
+    outrange = outend - outstart;
+    inrelativetostart = invalue - instart;
+    
+    -- scale
+    fractionintorange = inrelativetostart / inrange;
+    outrelativetostart = fractionintorange * outrange;
+    
+    -- translate
+    return outrelativetostart + outstart;
+end
+
+--------------------------------------------------------------------------
+function clamp(invalue, minvalue, maxvalue)
+    if(invalue < minvalue) return minvalue;
+    if(invalue > maxvalue) return maxvalue;
+    return invalue;
+end
+
+-- hello qtie
 __gfx__
 00000000555555550000000088888888000000004444444400000000555555150000000033333333000000000000000000000000000000000000000000000000
 00000000500000050000000080000008000000004444464400000000111111110000000033333b3b000000000000000000000000000000000000000000000000
