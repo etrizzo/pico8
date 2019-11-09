@@ -12,6 +12,7 @@ lastcalled = time();
 function setglobals()
     camerax = 0
     cameray = 0
+    gamestate = "playing"; -- attract, playing, victory
 end
 
 --------------------------------------------------------------------------
@@ -26,26 +27,57 @@ function startup()
     setglobals()
 end
 
-
 --------------------------------------------------------------------------
 -- update
 --------------------------------------------------------------------------
 function _update()
     calculatedeltaseconds()
     camera(camerax, cameray)
+
+    if(gamestate == "attract") attractupdate();
+    if(gamestate == "playing") playingupdate();
+    if(gamestate == "victory") victoryupdate();
 end
 
+--------------------------------------------------------------------------
+function attractupdate()
+    if btnp(4) then
+        gamestate = "playing";
+    end
+end
 
+--------------------------------------------------------------------------
+function playingupdate()
+end
+
+--------------------------------------------------------------------------
+function victoryupdate()
+end
 
 --------------------------------------------------------------------------
 -- render
 --------------------------------------------------------------------------
 function _draw()
     cls()
-    map(0,0,0,0,128,64)
-
+    if(gamestate == "attract") attractrender();
+    if(gamestate == "playing") playingrender();
+    if(gamestate == "victory") victoryrender();
 end
 
+--------------------------------------------------------------------------
+function attractrender()
+    print(gamestate, 0, cameray);
+end
+
+--------------------------------------------------------------------------
+function playingrender()
+    map(0,0,0,0,128,64)
+end
+
+--------------------------------------------------------------------------
+function victoryrender()
+    print(gamestate, 0, cameray);
+end
 
 --------------------------------------------------------------------------
 -- utils
