@@ -88,7 +88,26 @@ function _handleinput()
 	handlecursorinput();
 	if (btnp(4) or btnp(5)) then
 		tryplaceflower();
+        
+        if(canplant) then
+            afterplayerplants();
+        end
     end
+end
+
+--------------------------------------------------------------------------
+function afterplayerplants()
+    
+    local numberOfWeedsAtStart = #g_weedsinlevel
+    spreadtheweeds()
+
+    if numberOfWeedsAtStart == #g_weedsinlevel then
+        -- game ends (maybe make all empty spaces flowers)
+        
+        gamestate = "victory"
+        return
+    end
+
 end
 
 --------------------------------------------------------------------------
@@ -133,7 +152,7 @@ function canplantflowerattile(flower, tile)
     return true;
 end
 
-
+--------------------------------------------------------------------------
 function plantflower(flower, tile) 
     arraypos = 1;
     for y=tile.y-1, tile.y+1 do 
