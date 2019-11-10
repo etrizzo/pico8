@@ -12,8 +12,8 @@ lastcalled = time();
 -- globals
 tilecursor = 
 {
-	x = 0;
-	y = 0;
+	x = 60;
+	y = 60;
 };
 hovertile = 
 {
@@ -34,6 +34,7 @@ g_canplant = false;
 
 g_currentlevel = 1;
 g_levelresults = {};
+g_startoflevel = false;
 
 debugvalidtiles = {};
 
@@ -41,8 +42,8 @@ badtiles = {};
 
 -- variables that need to be reset pre game instance! 
 function setglobals()
-	tilecursor.x = 0;
-	tilecursor.y = 0;
+	tilecursor.x = 60;
+	tilecursor.y = 60;
     camerax = 0
     cameray = 0
     g_currentlevel = 1
@@ -90,17 +91,27 @@ end
 function startup()
     setglobals()
     getalltheweedsinlevel()
-    startoflevel()
+    startoflevel(false)
 end
 
 --------------------------------------------------------------------------
-function startoflevel()
+function startoflevel(didwin)
     g_hidecursor = false
-    
+    if (didwin) then
+        g_currentlevel+=1;
+    else
+        reload(0x2000, 0x2000, 0x1000);
+    end
     g_currentpieceindex = 1;
     level = g_levels[g_currentlevel]
     g_currentflower.tiles = g_possibleFlowers[level[g_currentpieceindex]]
     g_amoutofpiecesforlevel = #level
+
+    playstate = "playing";
+    
+    getalltheweedsinlevel();
+    g_startoflevel = true;
+    
 end
 
 --------------------------------------------------------------------------
@@ -110,15 +121,18 @@ function _update()
     calculatedeltaseconds()
     camera(camerax, cameray)
 
-    if(gamestate == "attract") attractupdate();
-    if(gamestate == "playing") playingupdate();
-    if(gamestate == "victory") victoryupdate();
+    if(gamestate == "attract") then attractupdate();
+    elseif(gamestate == "playing") then playingupdate();
+    elseif(gamestate == "victory") then victoryupdate();
+    end
+    if (g_startoflevel) g_startoflevel = false;
 end
 
 --------------------------------------------------------------------------
 function attractupdate()
-    if btnp(4) then
+    if (btnp(4) or btnp(5)) then
         gamestate = "playing";
+        startup();
     end
 end
 
@@ -129,6 +143,9 @@ end
 
 --------------------------------------------------------------------------
 function victoryupdate()
+    if (btnp(4) or btnp(5)) then
+        gamestate = "attract";
+    end
 end
 
 --------------------------------------------------------------------------
@@ -140,7 +157,7 @@ end
 
 function handleplayinginput()
     handlecursorinput();
-    if (btnp(4) or btnp(5)) then
+    if ((btnp(4) or btnp(5)) and (not g_startoflevel)) then
 	    tryplaceflower();
        
         if(g_canplant) then
@@ -151,7 +168,17 @@ end
 
 function handlelevelcompleteinput()
     if (btnp(4) or btnp(5)) then
-        movecameratonextmap();
+        if (g_levelscore.flowercount > g_levelscore.weedcount) then
+            if (g_currentlevel >= #g_levels) then
+                gamestate = "victory";
+            else
+                movecameratonextmap();
+                startoflevel(true);
+            end
+        else
+            startoflevel(false);
+        end
+        
     end
 end
 
@@ -183,7 +210,7 @@ function completelevel(weedscontrolled)
     end
 
     -- count weeds & flowers
-    local levelscore = {
+    g_levelscore = {
         flowercount = 0;
         weedcount = 0;
     }
@@ -195,9 +222,9 @@ function completelevel(weedscontrolled)
             local tileposx, tileposy = gettileposfromworldpos(posx,posy)
             spriteindex = gettilesprite(tileposx, tileposy);
             if (isflower(spriteindex)) then
-                levelscore.flowercount+=1;
+                g_levelscore.flowercount+=1;
             elseif (isweed(spriteindex)) then
-                levelscore.weedcount+=1;
+                g_levelscore.weedcount+=1;
             end
             
             posx += 8
@@ -205,7 +232,9 @@ function completelevel(weedscontrolled)
         posy += 8
         posx = camerax;
     end
-    g_levelresults[g_currentlevel] = levelscore;
+    if (g_levelscore.flowercount > g_levelscore.weedcount) then
+        g_levelresults[g_currentlevel] = levelscore;
+    end
 end
 
 function debugprintcount()
@@ -358,7 +387,7 @@ end
 
 --------------------------------------------------------------------------
 function attractrender()
-    print(gamestate, 0, cameray);
+    printui(gamestate);
 end
 
 --------------------------------------------------------------------------
@@ -388,8 +417,8 @@ function levelcompleterender()
     rectfillui(18, 18, 110, 72, 7); -- white border
     rectfillui(20, 20, 108, 70, 1); -- dark blue center
     printui("Level complete!", 30, 30, 7);
-    printui(g_levelresults[g_currentlevel].flowercount .. " flowers and ", 30, 40, 7);
-    printui(g_levelresults[g_currentlevel].weedcount .. " weeds!", 30, 50, 7);
+    printui(g_levelscore.flowercount .. " flowers and ", 30, 40, 7);
+    printui(g_levelscore.weedcount .. " weeds!", 30, 50, 7);
     printui("Press x!", 35, 60, 7);
     
 end
@@ -489,7 +518,7 @@ end
 
 --------------------------------------------------------------------------
 function victoryrender()
-    print(gamestate, 0, cameray);
+    printui("victory!!", 35, 45, 7);
 end
 
 --------------------------------------------------------------------------
@@ -581,12 +610,9 @@ function movecameratonextmap()
         camerax = 0
         cameray += 128
     end
-    playstate = "playing";
-    tilecursor.x = camerax;
-    tilecursor.y = cameray;
-    g_currentlevel+=1;
+    tilecursor.x = camerax + 60;
+    tilecursor.y = cameray + 60;
     updatehovertile();
-    getalltheweedsinlevel();
 end
 
 --------------------------------------------------------------------------
