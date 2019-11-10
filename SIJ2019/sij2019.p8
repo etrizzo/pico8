@@ -22,13 +22,13 @@ hovertile =
 };
 
 g_weedsinlevel = {}
-flower = {
-	tiles = {1, 0, 1, 0, 1, 0, 1, 0, 1}; 
+nullflower = 
+{
+	tiles = {0, 0, 0,  0, 0, 0,  0, 0, 0}; 
 	sprite = 3;
 }
 
-g_currentflower = flower;
-g_weedsaddedthisturn = 0;
+g_currentflower = nullflower;
 
 g_canplant = false;
 
@@ -45,9 +45,29 @@ function setglobals()
 	tilecursor.y = 0;
     camerax = 0
     cameray = 0
+    g_currentlevel = 1
+    g_amoutofpiecesforlevel = 0
+    g_currentpieceindex = 1
+    g_hidecursor = false
     gamestate = "playing"; -- attract, playing, victory
     playstate = "playing"; -- playing, levelcomplete
 end
+
+g_possibleFlowers =
+{
+    {0, 1, 0,  0, 1, 0,  0, 1, 0}, -- 3 vertical (1) 
+    {1, 0, 1,  0, 1, 0,  1, 0, 1}, -- x shape (2)
+    {1, 0, 0,  0, 1, 0,  0, 0, 0}, -- bl 2 piece diag (3)
+    {0, 0, 0,  1, 1, 1,  0, 0, 0}, -- 3 horizontal (4) 
+    {1, 1, 1,  1, 1, 1,  1, 1, 1}, -- full block (5) 
+
+}
+
+-- these use an index into g_possibleFlowers
+g_levels = 
+{
+    { 5, 1, 2, 3}
+}
 
 --------------------------------------------------------------------------
 -- Init
@@ -60,6 +80,17 @@ end
 function startup()
     setglobals()
     getalltheweedsinlevel()
+    startoflevel()
+end
+
+--------------------------------------------------------------------------
+function startoflevel()
+    g_hidecursor = false
+    
+    g_currentpieceindex = 1;
+    level = g_levels[g_currentlevel]
+    g_currentflower.tiles = g_possibleFlowers[level[g_currentpieceindex]]
+    g_amoutofpiecesforlevel = #level
 end
 
 --------------------------------------------------------------------------
@@ -226,9 +257,10 @@ end
 
 --------------------------------------------------------------------------
 function tryplaceflower()
-    if (canplantflowerattile(flower, hovertile)) then
+    if (canplantflowerattile(g_currentflower, hovertile)) then
         plantflower(g_currentflower, hovertile);
         g_canplant = true;
+        changetonextflowerpiece();
     else 
         g_canplant = false;
     end
@@ -326,6 +358,7 @@ function playingrender()
     debugrendervalidtiles()
     debugprintcount();
     printui(g_currentlevel, 0, 0, 7);
+    drawlevelpieceui()
     if (playstate == "levelcomplete") levelcompleterender();
 
 end
@@ -348,6 +381,100 @@ function levelcompleterender()
     printui(g_levelresults[g_currentlevel].flowercount .. " flowers and ", 30, 40, 7);
     printui(g_levelresults[g_currentlevel].weedcount .. " weeds!", 30, 50, 7);
     printui("Press x!", 35, 60, 7);
+    
+end
+
+--------------------------------------------------------------------------
+function drawlevelpieceui()
+    if (g_amoutofpiecesforlevel - g_currentpieceindex) < 0 then
+        return
+    end
+    
+    rectfill(camerax + 2, cameray + 8, camerax + 21, cameray + 63, 14 )
+    rect(camerax + 2, cameray + 8, camerax + 21, cameray + 63, 7 )
+
+    currentheight = cameray + 11
+    boxsize = 13
+    amountToDraw = min(3, g_amoutofpiecesforlevel + 1 - g_currentpieceindex)
+
+    for i = g_currentpieceindex, g_currentpieceindex + amountToDraw -1 do
+        rectfill(camerax + 5, currentheight, camerax + 18, currentheight + 13, 7)
+        
+        if(i == g_currentpieceindex) then
+            rect(camerax + 5, currentheight, camerax + 18, currentheight + boxsize, 3)
+        end
+
+        drawpieceforui(i, camerax + 6, currentheight, camerax + 16, currentheight + 14)
+        
+        currentheight += 18
+    end
+
+end
+
+--------------------------------------------------------------------------
+function drawpieceforui(tableindex, minx, miny)
+    
+    levelinfo = g_levels[g_currentlevel]
+    currentpiece = g_possibleFlowers[levelinfo[tableindex]]
+    
+    minx += 1
+    miny += 1
+
+    if currentpiece[1] == 1 then
+        rectfill(minx + 1, miny + 2, minx + 2, miny + 3,3)
+    end
+
+    if currentpiece[2] == 1 then
+        rectfill(minx + 4, miny + 2, minx + 5, miny + 3, 3)
+    end
+
+    if currentpiece[3] == 1 then
+        rectfill(minx + 7, miny + 2, minx + 8, miny + 3, 3)
+    end
+    
+    -- 2nd
+    if currentpiece[4] == 1 then
+        rectfill(minx + 1, miny + 5, minx + 2, miny + 6, 3)
+
+    end
+
+    if currentpiece[5] == 1 then
+        rectfill(minx + 4, miny + 5, minx + 5, miny + 6, 3)
+
+    end
+
+    if currentpiece[6] == 1 then
+        rectfill(minx + 7, miny + 5, minx + 8, miny + 6, 3)
+    end
+
+    -- 3rd
+    if currentpiece[7] == 1 then
+        rectfill(minx + 1, miny + 8, minx + 2, miny + 9, 3)
+
+    end
+
+    if currentpiece[8] == 1 then
+        rectfill(minx + 4, miny + 8, minx + 5, miny + 9, 3)
+    end
+
+    if currentpiece[9] == 1 then
+        rectfill(minx + 7, miny + 8, minx + 8, miny + 9, 3)
+    end
+
+
+end
+
+function getboxfrombox(minpercx, minpercy, maxpercx, maxpercy, theminx, theminy, themaxx, themaxy)
+    width = abs(themaxx - theminx)
+    height = abs(themaxy - theminy)
+
+    newminsx = minpercx * width;
+    newminsy = minpercy * height;
+
+    newmaxx = maxpercx * width;
+    newmaxy = maxpercy * height;
+
+    return { minx = theminx + newminsx, miny = theminy + newminsy, maxx = theminx + newmaxx, maxy = newmaxy + theminy}
 end
 
 --------------------------------------------------------------------------
@@ -357,24 +484,25 @@ end
 
 --------------------------------------------------------------------------
 function drawcursor()
-	--draw the tile cursor
-    arraypos = 1;
-    canplace = true;
-    for y=hovertile.y-1, hovertile.y+1 do 
-        for x=hovertile.x-1, hovertile.x+1 do
-            if (flower.tiles[arraypos] != 0) then
-                
-                if (cangrowattile(x, y)) then
-                    spr(15, x * 8, y * 8);
-                else
-                    spr(31, x * 8, y * 8);
-                    canplace = false;
+	--draw the tile cursor (if we have peices)
+    
+    if g_hidecursor == false then 
+        arraypos = 1;
+        canplace = true;
+        for y=hovertile.y-1, hovertile.y+1 do 
+            for x=hovertile.x-1, hovertile.x+1 do
+                if (g_currentflower.tiles[arraypos] != 0) then
+                    if (cangrowattile(x, y)) then
+                        spr(15, x * 8, y * 8);
+                    else
+                        spr(31, x * 8, y * 8);
+                        canplace = false;
+                    end
                 end
+                arraypos+=1;
             end
-            arraypos+=1;
         end
     end
-
 	
     --draw the mouse position
     if (canplace) then
@@ -449,6 +577,20 @@ function movecameratonextmap()
     g_currentlevel+=1;
     updatehovertile();
     getalltheweedsinlevel();
+end
+
+--------------------------------------------------------------------------
+function changetonextflowerpiece()
+    g_currentpieceindex += 1;
+
+    if g_currentpieceindex > g_amoutofpiecesforlevel then
+        g_hidecursor = true
+        g_currentflower = nullflower
+        return
+    end
+
+    levels = g_levels[g_currentlevel]
+    g_currentflower.tiles = g_possibleFlowers[levels[g_currentpieceindex]]
 end
 
 --------------------------------------------------------------------------
