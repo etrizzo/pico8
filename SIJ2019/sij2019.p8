@@ -606,7 +606,7 @@ end
 function movecameratonextmap()
     -- 8 by 4 is map dimensions
     camerax += 128
-    if camerax > (128 * 8) then
+    if camerax > (128 * 7) then
         camerax = 0
         cameray += 128
     end
