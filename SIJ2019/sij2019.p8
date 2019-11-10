@@ -12,8 +12,8 @@ lastcalled = time();
 -- globals
 tilecursor = 
 {
-	x = 0;
-	y = 0;
+	x = 60;
+	y = 60;
 };
 hovertile = 
 {
@@ -42,8 +42,8 @@ badtiles = {};
 
 -- variables that need to be reset pre game instance! 
 function setglobals()
-	tilecursor.x = 0;
-	tilecursor.y = 0;
+	tilecursor.x = 60;
+	tilecursor.y = 60;
     camerax = 0
     cameray = 0
     g_currentlevel = 1
@@ -68,7 +68,7 @@ g_possibleFlowers =
 g_levels = 
 {
     {1, 1, 3, 2, 3, 5, 2},
-    -- {1, 4, 3, 3, 2, 3, 2},
+    {1, 4, 3, 3, 2, 3, 2},
     -- {1, 4, 3, 5, 2, 3, 2},
     -- {1, 4, 3, 5, 3, 3, 2},
     -- {1, 4, 3, 5, 2, 3, 2}
@@ -381,7 +381,7 @@ end
 
 --------------------------------------------------------------------------
 function attractrender()
-    print(gamestate, 0, cameray);
+    printui(gamestate);
 end
 
 --------------------------------------------------------------------------
@@ -604,8 +604,8 @@ function movecameratonextmap()
         camerax = 0
         cameray += 128
     end
-    tilecursor.x = camerax;
-    tilecursor.y = cameray;
+    tilecursor.x = camerax + 60;
+    tilecursor.y = cameray + 60;
     updatehovertile();
 end
 
