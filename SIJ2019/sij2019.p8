@@ -95,6 +95,20 @@ g_levels =
     { 5, 1, 2, 3},
 }
 
+g_levelnames =
+{
+	"utah",
+	"arkansas",    
+	"ohio",
+	"lousianna",
+	"kentucky",
+	"west virginia",
+	"penssylvania",
+	"maryland",
+	"north carolina",
+	"texas",
+}
+
 --------------------------------------------------------------------------
 -- Init
 --------------------------------------------------------------------------
